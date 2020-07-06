@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone, Copy)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -19,7 +19,7 @@ impl Vec3 {
     }
 
     pub fn length(&self) -> f32 {
-        self.length().sqrt()
+        self.length_squared().sqrt()
     }
 
     pub fn dot(u: &Self, v: &Self) -> f32 {
