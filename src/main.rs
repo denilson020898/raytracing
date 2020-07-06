@@ -1,7 +1,13 @@
+mod hittable;
+mod hittable_list;
 mod ray;
+mod sphere;
 mod vec3;
 
+use hittable::{HitRecord, Hittable};
+use hittable_list::HittableList;
 use ray::Ray;
+use sphere::Sphere;
 use vec3::{Color, Vec3};
 
 use std::io::{self, Write};
@@ -13,24 +19,23 @@ fn write_color(pixel_color: Color) {
     println!("{} {} {}\n", ir, ig, ib)
 }
 
-fn hit_sphere(center: &Vec3, radius: f32, r: &Ray) -> f32 {
+fn hit_sphere(center: &Vec3, radius: f32, r: &Ray) -> Option<f32> {
     let oc = r.origin() - *center;
-    let a = Vec3::dot(&r.direction(), &r.direction());
-    let b = 2.0 * Vec3::dot(&oc, &r.direction());
-    let c = Vec3::dot(&oc, &oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-b - discriminant.sqrt()) / (2.0 * a)
+    let a = r.direction().length_squared();
+    let half_b = Vec3::dot(&oc, &r.direction());
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+
+    if discriminant >= 0.0 {
+        return Some((-half_b - discriminant.sqrt()) / a);
     }
+    None
 }
 
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let n = Vec3::unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+fn ray_color(r: &Ray, world: &mut HittableList) -> Color {
+    let mut rec = HitRecord::default();
+    if world.hit(r, 0.0, std::f32::INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
     }
     let unit_direction = Vec3::unit_vector(r.direction());
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -53,17 +58,20 @@ fn main() {
     let lower_left_corner =
         origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
 
+    let mut world = HittableList::default();
+    let s1 = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    let s2 = Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0);
+    world.push(Box::new(s1));
+    world.push(Box::new(s2));
+
     for j in (0..image_height).rev() {
         // eprint!("\rScalines remaining: {}", j);
         io::stdout().flush().unwrap();
         for i in 0..image_width {
             let u = i as f32 / (image_width as f32 - 1.0);
             let v = j as f32 / (image_height as f32 - 1.0);
-            let r = Ray::new(
-                origin,
-                lower_left_corner + u * horizontal + v * vertical - origin,
-            );
-            let pixel_color = ray_color(&r);
+            let r = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
+            let pixel_color = ray_color(&r, &mut world);
             write_color(pixel_color);
         }
     }
