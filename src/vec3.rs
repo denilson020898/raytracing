@@ -29,6 +29,13 @@ impl Vec3 {
         *v - 2.0 * Vec3::dot(v, n) * *n
     }
 
+    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f32) -> Vec3 {
+        let cos_theta = Vec3::dot(&(-*uv), &n);
+        let r_out_parallel: Vec3 = (*uv + cos_theta * (*n)) * etai_over_etat;
+        let r_out_perp = -(1.0 - r_out_parallel.length_squared()).sqrt() * *n;
+        r_out_parallel + r_out_perp
+    }
+
     pub fn random_unit_vector() -> Vec3 {
         let a = utils::random_f32_min_max(0.0, 2.0 * std::f32::consts::PI);
         let z = utils::random_f32_min_max(-1.0, 1.0);

@@ -54,7 +54,7 @@ fn ray_color(r: &Ray, world: &mut HittableList, depth: i32) -> Color {
 fn main() {
     let aspect_ratio = 16.0 / 9.0f32;
     let max_depth = 50;
-    let image_width = 200;
+    let image_width = 384;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
     let samples = 100;
 
@@ -66,7 +66,7 @@ fn main() {
         Vec3::new(0.0, 0.0, -1.0),
         0.5,
         Material::Lambertian {
-            albedo: Vec3::new(0.8, 0.3, 0.3),
+            albedo: Vec3::new(0.1, 0.2, 0.5),
         },
     )));
     objects.push(Box::new(Sphere::new(
@@ -81,14 +81,26 @@ fn main() {
         0.5,
         Material::Metal {
             albedo: Vec3::new(0.8, 0.6, 0.2),
+            fuzz: 0.3,
         },
     )));
     objects.push(Box::new(Sphere::new(
         Vec3::new(-1.0, 0.0, -1.0),
         0.5,
-        Material::Metal {
-            albedo: Vec3::new(0.8, 0.8, 0.8),
-        },
+        // Material::Metal {
+        //     albedo: Vec3::new(0.8, 0.8, 0.8),
+        //     fuzz: 0.1,
+        // },
+        Material::Dialetric { ref_idx: 1.5 },
+    )));
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        -0.45,
+        // Material::Metal {
+        //     albedo: Vec3::new(0.8, 0.8, 0.8),
+        //     fuzz: 0.1,
+        // },
+        Material::Dialetric { ref_idx: 1.5 },
     )));
 
     let mut world = HittableList::new(objects);
