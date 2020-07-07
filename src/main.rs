@@ -1,11 +1,13 @@
 mod camera;
 mod hittable;
 mod hittable_list;
+mod material;
 mod ray;
 mod sphere;
 mod utils;
 mod vec3;
 
+use crate::material::{material_scatter, Material};
 use camera::Camera;
 use hittable::{HitRecord, Hittable};
 use hittable_list::HittableList;
@@ -32,15 +34,18 @@ fn write_color(pixel_color: Color, samples_per_pixel: i32) {
 }
 
 fn ray_color(r: &Ray, world: &mut HittableList, depth: i32) -> Color {
-    let mut rec = HitRecord::default();
-
     if depth <= 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if world.hit(r, 0.001, std::f32::MAX, &mut rec) {
-        let target = rec.p + rec.normal + Vec3::random_in_hemisphere(&r.direction());
-        return 0.5 * ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1);
+    if let Some(rec) = world.hit(r, 0.001, std::f32::MAX) {
+        let mut scattered = Ray::default();
+        let mut attenuation = Vec3::default();
+        if material_scatter(&rec.material, &r, &rec, &mut attenuation, &mut scattered) {
+            return attenuation * ray_color(&scattered, world, depth - 1);
+        } else {
+            return Vec3::new(0.0, 0.0, 0.0);
+        }
     }
     let unit_direction = Vec3::unit_vector(r.direction());
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -57,11 +62,34 @@ fn main() {
 
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let s1 = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
-    let s2 = Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0);
-
-    objects.push(Box::new(s1));
-    objects.push(Box::new(s2));
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(0.0, 0.0, -1.0),
+        0.5,
+        Material::Lambertian {
+            albedo: Vec3::new(0.8, 0.3, 0.3),
+        },
+    )));
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(0.0, -100.5, -1.0),
+        100.0,
+        Material::Lambertian {
+            albedo: Vec3::new(0.8, 0.8, 0.0),
+        },
+    )));
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(1.0, 0.0, -1.0),
+        0.5,
+        Material::Metal {
+            albedo: Vec3::new(0.8, 0.6, 0.2),
+        },
+    )));
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Material::Metal {
+            albedo: Vec3::new(0.8, 0.8, 0.8),
+        },
+    )));
 
     let mut world = HittableList::new(objects);
 

@@ -25,6 +25,10 @@ impl Vec3 {
         }
     }
 
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        *v - 2.0 * Vec3::dot(v, n) * *n
+    }
+
     pub fn random_unit_vector() -> Vec3 {
         let a = utils::random_f32_min_max(0.0, 2.0 * std::f32::consts::PI);
         let z = utils::random_f32_min_max(-1.0, 1.0);
