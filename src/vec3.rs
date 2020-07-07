@@ -24,6 +24,23 @@ impl Vec3 {
             return p;
         }
     }
+
+    pub fn random_unit_vector() -> Vec3 {
+        let a = utils::random_f32_min_max(0.0, 2.0 * std::f32::consts::PI);
+        let z = utils::random_f32_min_max(-1.0, 1.0);
+        let r = (1.0 - z * z).sqrt();
+        Vec3::new(r * a.cos(), r * a.sin(), z)
+    }
+
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if Vec3::dot(&in_unit_sphere, normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
+
     pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }

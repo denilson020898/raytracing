@@ -38,8 +38,8 @@ fn ray_color(r: &Ray, world: &mut HittableList, depth: i32) -> Color {
         return Color::new(0.0, 0.0, 0.0);
     }
 
-    if world.hit(r, 0.0, std::f32::MAX, &mut rec) {
-        let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
+    if world.hit(r, 0.001, std::f32::MAX, &mut rec) {
+        let target = rec.p + rec.normal + Vec3::random_in_hemisphere(&r.direction());
         return 0.5 * ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1);
     }
     let unit_direction = Vec3::unit_vector(r.direction());
