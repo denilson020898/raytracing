@@ -1,3 +1,4 @@
+use crate::utils;
 use std::ops;
 
 #[derive(Default, Debug, PartialEq, Clone, Copy)]
@@ -14,6 +15,15 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random_min_max(-1.0, 1.0);
+            if p.length_squared() >= 1.0 {
+                continue;
+            }
+            return p;
+        }
+    }
     pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -47,6 +57,22 @@ impl Vec3 {
     }
     pub fn z(&self) -> f32 {
         self.z
+    }
+
+    pub fn random() -> Self {
+        Self::new(
+            utils::random_f32(),
+            utils::random_f32(),
+            utils::random_f32(),
+        )
+    }
+
+    pub fn random_min_max(min: f32, max: f32) -> Self {
+        Self::new(
+            utils::random_f32_min_max(min, max),
+            utils::random_f32_min_max(min, max),
+            utils::random_f32_min_max(min, max),
+        )
     }
 }
 

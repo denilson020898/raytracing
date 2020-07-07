@@ -1,9 +1,12 @@
+mod camera;
 mod hittable;
 mod hittable_list;
 mod ray;
 mod sphere;
+mod utils;
 mod vec3;
 
+use camera::Camera;
 use hittable::{HitRecord, Hittable};
 use hittable_list::HittableList;
 use ray::Ray;
@@ -12,30 +15,32 @@ use vec3::{Color, Vec3};
 
 use std::io::{self, Write};
 
-fn write_color(pixel_color: Color) {
-    let ir = (255.999 * pixel_color.x()) as i32;
-    let ig = (255.999 * pixel_color.y()) as i32;
-    let ib = (255.999 * pixel_color.z()) as i32;
+fn write_color(pixel_color: Color, samples_per_pixel: i32) {
+    let mut r = pixel_color.x();
+    let mut g = pixel_color.y();
+    let mut b = pixel_color.z();
+
+    let scale = 1.0 / samples_per_pixel as f32;
+    r = (scale * r).sqrt();
+    g = (scale * g).sqrt();
+    b = (scale * b).sqrt();
+
+    let ir = (256.0 * utils::clamp(r, 0.0, 0.999)) as i32;
+    let ig = (256.0 * utils::clamp(g, 0.0, 0.999)) as i32;
+    let ib = (256.0 * utils::clamp(b, 0.0, 0.999)) as i32;
     println!("{} {} {}\n", ir, ig, ib)
 }
 
-fn hit_sphere(center: &Vec3, radius: f32, r: &Ray) -> Option<f32> {
-    let oc = r.origin() - *center;
-    let a = r.direction().length_squared();
-    let half_b = Vec3::dot(&oc, &r.direction());
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-
-    if discriminant >= 0.0 {
-        return Some((-half_b - discriminant.sqrt()) / a);
-    }
-    None
-}
-
-fn ray_color(r: &Ray, world: &mut HittableList) -> Color {
+fn ray_color(r: &Ray, world: &mut HittableList, depth: i32) -> Color {
     let mut rec = HitRecord::default();
-    if world.hit(r, 0.0, std::f32::INFINITY, &mut rec) {
-        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
+
+    if world.hit(r, 0.0, std::f32::MAX, &mut rec) {
+        let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
+        return 0.5 * ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1);
     }
     let unit_direction = Vec3::unit_vector(r.direction());
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -43,20 +48,12 @@ fn ray_color(r: &Ray, world: &mut HittableList) -> Color {
 }
 fn main() {
     let aspect_ratio = 16.0 / 9.0f32;
-    let image_width = 384;
+    let max_depth = 50;
+    let image_width = 200;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
+    let samples = 100;
 
     println!("P3\n{} {}\n255\n", image_width, image_height);
-
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
 
     let mut world = HittableList::default();
     let s1 = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
@@ -64,15 +61,20 @@ fn main() {
     world.push(Box::new(s1));
     world.push(Box::new(s2));
 
+    let cam = Camera::new();
+
     for j in (0..image_height).rev() {
         // eprint!("\rScalines remaining: {}", j);
         io::stdout().flush().unwrap();
         for i in 0..image_width {
-            let u = i as f32 / (image_width as f32 - 1.0);
-            let v = j as f32 / (image_height as f32 - 1.0);
-            let r = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
-            let pixel_color = ray_color(&r, &mut world);
-            write_color(pixel_color);
+            let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
+            for _ in 0..samples {
+                let u = (i as f32 + utils::random_f32()) / image_width as f32;
+                let v = (j as f32 + utils::random_f32()) / image_height as f32;
+                let r = cam.get_ray(u, v);
+                pixel_color += ray_color(&r, &mut world, max_depth);
+            }
+            write_color(pixel_color, samples);
         }
     }
     eprintln!("\nDone.\n");
