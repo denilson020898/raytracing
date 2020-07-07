@@ -55,11 +55,15 @@ fn main() {
 
     println!("P3\n{} {}\n255\n", image_width, image_height);
 
-    let mut world = HittableList::default();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+
     let s1 = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
     let s2 = Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0);
-    world.push(Box::new(s1));
-    world.push(Box::new(s2));
+
+    objects.push(Box::new(s1));
+    objects.push(Box::new(s2));
+
+    let mut world = HittableList::new(objects);
 
     let cam = Camera::new();
 
