@@ -1,3 +1,3 @@
-[Result](img.png)
+![GitHub Logo](img.png)
 
-[GitHub](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+[Resource](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
