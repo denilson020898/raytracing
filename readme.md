@@ -1,2 +1,3 @@
-![GitHub Logo](img.png)
-Format: ![Alt Text](url)
+![Result](img.png)
+
+![Resources](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
