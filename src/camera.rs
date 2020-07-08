@@ -1,4 +1,5 @@
 use crate::ray::Ray;
+use crate::utils;
 use crate::vec3::Vec3;
 
 pub struct Camera {
@@ -9,17 +10,20 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Camera {
-        let aspect_ratio = 16.0 / 9.0f32;
-        let viewport_height = 2.0;
+    pub fn new(look_from: Vec3, look_at: Vec3, vup: Vec3, vfov: f32, aspect_ratio: f32) -> Camera {
+        let theta = utils::degrees_to_radians(vfov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
-        let focal_length = 1.0;
 
-        let origin = Vec3::new(0.0, 0.0, 0.0);
-        let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-        let vertical = Vec3::new(0.0, viewport_height, 0.0);
-        let lower_left_corner =
-            origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+        let w = Vec3::unit_vector(look_from - look_at);
+        let u = Vec3::unit_vector(Vec3::cross(&vup, &w));
+        let v = Vec3::cross(&w, &u);
+
+        let origin = look_from;
+        let horizontal = viewport_width * u;
+        let vertical = viewport_height * v;
+        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - w;
         Camera {
             origin,
             lower_left_corner,

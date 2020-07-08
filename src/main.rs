@@ -105,7 +105,13 @@ fn main() {
 
     let mut world = HittableList::new(objects);
 
-    let cam = Camera::new();
+    let cam = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
+        aspect_ratio,
+    );
 
     for j in (0..image_height).rev() {
         // eprint!("\rScalines remaining: {}", j);
