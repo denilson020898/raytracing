@@ -63,53 +63,82 @@ fn main() {
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     objects.push(Box::new(Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
         Material::Lambertian {
-            albedo: Vec3::new(0.1, 0.2, 0.5),
+            albedo: Vec3::new(0.5, 0.5, 0.5),
         },
     )));
+
     objects.push(Box::new(Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        Material::Dialetric { ref_idx: 1.5 },
+    )));
+
+    objects.push(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
         Material::Lambertian {
-            albedo: Vec3::new(0.8, 0.8, 0.0),
+            albedo: Vec3::new(0.4, 0.2, 0.1),
         },
     )));
+
     objects.push(Box::new(Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
+        Vec3::new(4.0, 1.0, 0.0),
+        1.0,
         Material::Metal {
-            albedo: Vec3::new(0.8, 0.6, 0.2),
-            fuzz: 0.3,
+            albedo: Vec3::new(0.7, 0.6, 0.5),
+            fuzz: 0.0,
         },
     )));
-    objects.push(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        // Material::Metal {
-        //     albedo: Vec3::new(0.8, 0.8, 0.8),
-        //     fuzz: 0.1,
-        // },
-        Material::Dialetric { ref_idx: 1.5 },
-    )));
-    objects.push(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.45,
-        // Material::Metal {
-        //     albedo: Vec3::new(0.8, 0.8, 0.8),
-        //     fuzz: 0.1,
-        // },
-        Material::Dialetric { ref_idx: 1.5 },
-    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = utils::random_f32();
+            let center = Vec3::new(
+                a as f32 + utils::random_f32(),
+                0.2,
+                b as f32 + 0.9 * utils::random_f32(),
+            );
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    // diffuse
+                    let albedo = Vec3::random() * Vec3::random();
+                    objects.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Material::Lambertian { albedo },
+                    )));
+                } else if choose_mat < 0.95 {
+                    // metal
+                    let albedo = Vec3::random_min_max(0.5, 1.0);
+                    let fuzz = utils::random_f32_min_max(0.0, 0.5);
+                    objects.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Material::Metal { albedo, fuzz },
+                    )));
+                } else {
+                    // glass
+                    objects.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Material::Dialetric { ref_idx: 1.5 },
+                    )));
+                }
+            }
+        }
+    }
 
     let mut world = HittableList::new(objects);
 
-    let look_from = Vec3::new(3.0, 3.0, 2.0);
-    let look_at = Vec3::new(0.0, 0.0, -1.0);
+    let look_from = Vec3::new(13.0, 2.0, 3.0);
+    let look_at = Vec3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
-    let dist_to_focus = (look_from - look_at).length();
-    let aperture = 2.0f32;
+    let dist_to_focus = 10.0f32;
+    let aperture = 0.1f32;
 
     let cam = Camera::new(
         look_from,
