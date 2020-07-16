@@ -1,3 +1,3 @@
-![GitHub Logo](img.png)
+[Ray Tracing in One Weeking](https://raytracing.github.io/books/RayTracingInOneWeekend.html) in Rust.
 
-[Resource](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+![GitHub Logo](img.png)
